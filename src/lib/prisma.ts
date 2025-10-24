@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import type { Player } from '@/config/players';
 import fs from 'fs';
 import path from 'path';
@@ -108,25 +108,44 @@ export class HybridStorage {
   static async updatePlayer(steamId: string, updateData: any) {
     try {
       // 仅使用 MongoDB，禁止写文件回退
+      const data: any = {};
+      if (typeof updateData?.name === 'string') data.name = updateData.name;
+      if (updateData?.position !== undefined) {
+        const pos = Array.isArray(updateData.position) ? updateData.position : [updateData.position];
+        if (!pos.every((p: any) => typeof p === 'string')) {
+          throw new Error('请求参数无效: position 必须为字符串数组');
+        }
+        data.position = pos;
+      }
+      if (updateData?.mainHeroes !== undefined) {
+        const heroes = Array.isArray(updateData.mainHeroes) ? updateData.mainHeroes : [updateData.mainHeroes];
+        if (!heroes.every((h: any) => typeof h === 'string')) {
+          throw new Error('请求参数无效: mainHeroes 必须为字符串数组');
+        }
+        data.mainHeroes = heroes;
+      }
+      if (Object.keys(data).length === 0) {
+        throw new Error('无有效更新字段');
+      }
+
       const player = await withTimeout(
-        prisma.player.update({
-          where: { steamId },
-          data: {
-            name: updateData.name,
-            position: Array.isArray(updateData.position) ? updateData.position : [updateData.position],
-            mainHeroes: updateData.mainHeroes
-          }
-        }),
+        prisma.player.update({ where: { steamId }, data }),
         DB_TIMEOUT_MS
       );
 
       return this.transformDbPlayer(player);
     } catch (error: any) {
-      // 直接抛出数据库更新错误，供上层返回
-      const msg = error?.code === 'P2025'
-        ? '未找到该玩家，无法更新'
-        : '数据库更新失败';
-      throw new Error(msg);
+      // 错误分类与可选诊断
+      let msg = '数据库更新失败';
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') msg = '未找到该玩家，无法更新';
+        else if (error.code === 'P2009') msg = '数据格式不正确';
+        else if (error.code === 'P2002') msg = '数据冲突：唯一约束冲突';
+      } else if (error instanceof Error && /请求参数无效|无有效更新字段/.test(error.message)) {
+        msg = error.message;
+      }
+      const withDiag = process.env.DB_DIAG === '1' && error?.message ? `${msg} - ${error.message}` : msg;
+      throw new Error(withDiag);
     }
   }
   

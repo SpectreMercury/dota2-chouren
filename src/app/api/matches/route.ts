@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { HybridStorage } from '@/lib/prisma';
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 import { currentWeekMatches } from '@/config/matches';
 
 export async function GET() {
@@ -43,6 +44,8 @@ export async function GET() {
     return NextResponse.json(merged);
   } catch (error: any) {
     console.error('获取对阵数据失败（DB 读取失败）:', error?.message || error);
-    return NextResponse.json({ error: '获取对阵数据失败' }, { status: 500 });
+    const payload: any = { error: '获取对阵数据失败' };
+    if (process.env.DB_DIAG === '1') payload.details = error?.message || String(error);
+    return NextResponse.json(payload, { status: 500 });
   }
 }
