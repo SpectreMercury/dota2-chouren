@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Player } from '@/config/players';
 
 interface NavbarProps {
@@ -21,6 +21,23 @@ export default function Navbar({ onUserBind, onUserUnbind, onEditProfile, userPl
   const [isBindModalOpen, setIsBindModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const hideTimer = useRef<number | null>(null);
+
+  const openMenu = () => {
+    if (hideTimer.current) {
+      window.clearTimeout(hideTimer.current);
+      hideTimer.current = null;
+    }
+    setShowUserMenu(true);
+  };
+
+  const scheduleCloseMenu = () => {
+    if (hideTimer.current) window.clearTimeout(hideTimer.current);
+    hideTimer.current = window.setTimeout(() => {
+      setShowUserMenu(false);
+      hideTimer.current = null;
+    }, 180); // 小延迟避免从触发区移动到子菜单时闪烁
+  };
 
   const handleBind = async () => {
     if (!steamId.trim()) {
@@ -49,18 +66,30 @@ export default function Navbar({ onUserBind, onUserUnbind, onEditProfile, userPl
   return (
     <>
       {/* 导航栏 */}
-      <nav className="fixed top-0 w-full bg-black/80 backdrop-blur-md border-b border-red-800/30 z-30">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex justify-between items-center">
-            <div className="text-red-400 font-bold text-xl">
-              DOTA 2 仇人杯
-            </div>
-            <div className="flex items-center gap-4">
+      <nav 
+        className="fixed top-0 w-full h-[90px] border-b border-red-800/30 z-30 bg-cover bg-center"
+        style={{ backgroundImage: "url('/img/nav.png')" }}
+      >
+        <div className="container mx-auto px-[60px] w-full h-full flex ">
+          <div className="flex justify-between w-full items-start">
+            <video
+                className=""
+                src="/img/coverlogo180517.webm"
+                autoPlay
+                muted
+                loop
+                width={156}
+                height={78}
+                playsInline
+                preload="metadata"
+                aria-label="DOTA 2 仇人杯"
+              />
+            <div className="flex gap-4 mt-2">
               {userPlayer ? (
                 <div 
                   className="relative"
-                  onMouseEnter={() => setShowUserMenu(true)}
-                  onMouseLeave={() => setShowUserMenu(false)}
+                  onMouseEnter={openMenu}
+                  onMouseLeave={scheduleCloseMenu}
                 >
                   <div className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-red-900/50 transition-colors cursor-pointer">
                     <img
@@ -80,7 +109,11 @@ export default function Navbar({ onUserBind, onUserUnbind, onEditProfile, userPl
                   
                   {/* 下拉菜单 */}
                   {showUserMenu && (
-                    <div className="absolute top-full right-0 mt-1 w-48 bg-black/90 backdrop-blur-md border border-red-800/50 rounded-lg shadow-xl z-50">
+                    <div 
+                      className="absolute top-full right-0 mt-1 w-48 bg-black/90 backdrop-blur-md border border-red-800/50 rounded-lg shadow-xl z-50"
+                      onMouseEnter={openMenu}
+                      onMouseLeave={scheduleCloseMenu}
+                    >
                       <button
                         onClick={() => {
                           onEditProfile();
@@ -122,7 +155,7 @@ export default function Navbar({ onUserBind, onUserUnbind, onEditProfile, userPl
       </nav>
 
       {/* 顶部占位，避免内容被导航栏遮挡 */}
-      <div className="h-16"></div>
+      <div className="h-[90px]"></div>
 
       {/* 绑定模态框 */}
       {isBindModalOpen && (

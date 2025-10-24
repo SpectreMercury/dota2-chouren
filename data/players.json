@@ -7,13 +7,13 @@
     "win": 2,
     "lose": 6,
     "position": [
-      "Carry",
-      "Mid"
+      "Support",
+      "Gank"
     ],
     "mainHeroes": [
-      "齐天大圣",
-      "混沌骑士",
-      "拉比克"
+      "拉比克",
+      "斯拉克",
+      "帕克"
     ],
     "matches": 8,
     "steamId": "332495668",

@@ -144,8 +144,11 @@ export default function ProfileModal({ isOpen, onClose, player, onSave, toast }:
   });
   const [isHeroModalOpen, setIsHeroModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [displayPlayer, setDisplayPlayer] = useState<Player | null>(player);
 
   useEffect(() => {
+    setDisplayPlayer(player);
     if (player) {
       setEditForm({
         name: player.name,
@@ -155,13 +158,38 @@ export default function ProfileModal({ isOpen, onClose, player, onSave, toast }:
     }
   }, [player]);
 
+  // 打开时拉取最新玩家数据，期间显示骨架屏
+  useEffect(() => {
+    const refresh = async () => {
+      if (!isOpen || !player?.steamId) return;
+      setIsRefreshing(true);
+      try {
+        const res = await fetch(`/api/players/search?steamId=${player.steamId}`, { cache: 'no-store' });
+        if (res.ok) {
+          const fresh = await res.json();
+          setDisplayPlayer(fresh);
+          setEditForm({
+            name: fresh.name,
+            position: Array.isArray(fresh.position) ? fresh.position : [fresh.position],
+            mainHeroes: fresh.mainHeroes
+          });
+        }
+      } catch (e) {
+        console.warn('刷新玩家信息失败:', e);
+      }
+      setIsRefreshing(false);
+    };
+    refresh();
+  }, [isOpen, player?.steamId]);
+
   const handleSave = async () => {
-    if (!player) return;
+    const current = displayPlayer || player;
+    if (!current) return;
 
     setIsLoading(true);
     try {
       const updatedPlayer = {
-        ...player,
+        ...current,
         ...editForm
       };
       
@@ -174,7 +202,9 @@ export default function ProfileModal({ isOpen, onClose, player, onSave, toast }:
       });
 
       if (response.ok) {
-        onSave(updatedPlayer);
+        const result = await response.json();
+        // 使用服务端返回的最新数据，避免本地与数据库不一致
+        onSave(result.player ?? updatedPlayer);
         setIsEditing(false);
         toast.success('保存成功', '信息已更新');
       } else {
@@ -187,15 +217,22 @@ export default function ProfileModal({ isOpen, onClose, player, onSave, toast }:
     setIsLoading(false);
   };
 
-  if (!isOpen || !player) return null;
+  if (!isOpen || !(displayPlayer || player)) return null;
 
-  const winRate = player.matches > 0 ? ((player.win / player.matches) * 100).toFixed(1) : '0.0';
+  const current = displayPlayer || player!;
+  const winRate = current.matches > 0 ? ((current.win / current.matches) * 100).toFixed(1) : '0.0';
 
   return (
     <>
       {/* 蒙层 */}
       <div 
-        className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50"
+        className="fixed inset-0 z-50"
+        style={{
+          backgroundImage: "linear-gradient(rgba(0,0,0,0.90), rgba(0,0,0,0.90)), url('/img/profile')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backdropFilter: 'blur(2px)'
+        }}
         onClick={onClose}
       ></div>
 
@@ -218,8 +255,8 @@ export default function ProfileModal({ isOpen, onClose, player, onSave, toast }:
               <div className="relative">
                 <div className="w-20 h-20 rounded-full bg-gradient-to-br from-red-600 to-red-800 p-1">
                   <img
-                    src={player.avatar}
-                    alt={player.name}
+                    src={current.avatar}
+                    alt={current.name}
                     className="w-full h-full rounded-full object-cover"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
@@ -229,7 +266,9 @@ export default function ProfileModal({ isOpen, onClose, player, onSave, toast }:
                 </div>
               </div>
               <div className="flex-1">
-                {isEditing ? (
+                {isRefreshing ? (
+                  <div className="h-8 bg-red-900/30 rounded w-40 animate-pulse" />
+                ) : isEditing ? (
                   <input
                     type="text"
                     value={editForm.name}
@@ -237,9 +276,11 @@ export default function ProfileModal({ isOpen, onClose, player, onSave, toast }:
                     className="text-2xl font-bold text-white bg-black/40 border border-red-700/50 rounded-lg px-3 py-2 w-full focus:outline-none focus:border-red-500 focus:bg-black/60 backdrop-blur-sm"
                   />
                 ) : (
-                  <h2 className="text-2xl font-bold text-white drop-shadow-lg">{player.name}</h2>
+                  <h2 className="text-2xl font-bold text-white drop-shadow-lg">{current.name}</h2>
                 )}
-                {isEditing ? (
+                {isRefreshing ? (
+                  <div className="mt-2 h-4 bg-red-900/30 rounded w-48 animate-pulse" />
+                ) : isEditing ? (
                   <div className="mt-2 space-y-2">
                     {['Carry', 'Mid', 'Offlane', 'Support', 'Gank'].map((pos) => (
                       <label key={pos} className="flex items-center space-x-2 cursor-pointer">
@@ -271,7 +312,7 @@ export default function ProfileModal({ isOpen, onClose, player, onSave, toast }:
                   </div>
                 ) : (
                   <p className="text-base text-red-300 drop-shadow">
-                    {Array.isArray(player.position) ? player.position.join('/') : player.position}
+                    {Array.isArray(current.position) ? current.position.join('/') : current.position}
                   </p>
                 )}
               </div>
@@ -283,19 +324,19 @@ export default function ProfileModal({ isOpen, onClose, player, onSave, toast }:
             {/* 统计数据 */}
             <div className="grid grid-cols-4 gap-4 mb-6">
               <div className="text-center bg-black/30 rounded-lg p-3 border border-red-800/30">
-                <div className="text-xl font-bold text-yellow-400 drop-shadow">{player.mmr}</div>
+                <div className="text-xl font-bold text-yellow-400 drop-shadow">{isRefreshing ? <span className="inline-block h-5 w-12 bg-red-900/30 rounded animate-pulse" /> : current.mmr}</div>
                 <div className="text-xs text-gray-300">MMR</div>
               </div>
               <div className="text-center bg-black/30 rounded-lg p-3 border border-red-800/30">
-                <div className="text-xl font-bold text-green-400 drop-shadow">{winRate}%</div>
+                <div className="text-xl font-bold text-green-400 drop-shadow">{isRefreshing ? <span className="inline-block h-5 w-10 bg-red-900/30 rounded animate-pulse" /> : `${winRate}%`}</div>
                 <div className="text-xs text-gray-300">胜率</div>
               </div>
               <div className="text-center bg-black/30 rounded-lg p-3 border border-red-800/30">
-                <div className="text-xl font-bold text-blue-400 drop-shadow">{player.avgKDA || '0.00'}</div>
+                <div className="text-xl font-bold text-blue-400 drop-shadow">{isRefreshing ? <span className="inline-block h-5 w-12 bg-red-900/30 rounded animate-pulse" /> : (current.avgKDA || '0.00')}</div>
                 <div className="text-xs text-gray-300">KDA</div>
               </div>
               <div className="text-center bg-black/30 rounded-lg p-3 border border-red-800/30">
-                <div className="text-xl font-bold text-purple-400 drop-shadow">{player.matches}</div>
+                <div className="text-xl font-bold text-purple-400 drop-shadow">{isRefreshing ? <span className="inline-block h-5 w-8 bg-red-900/30 rounded animate-pulse" /> : current.matches}</div>
                 <div className="text-xs text-gray-300">场次</div>
               </div>
             </div>
@@ -304,7 +345,7 @@ export default function ProfileModal({ isOpen, onClose, player, onSave, toast }:
             <div className="mb-6 bg-black/20 rounded-lg p-4 border border-red-800/30">
               <div className="flex justify-between text-sm mb-3">
                 <span className="text-gray-300">战绩</span>
-                <span className="text-white font-semibold">{player.win}胜 {player.lose}负</span>
+                <span className="text-white font-semibold">{current.win}胜 {current.lose}负</span>
               </div>
               <div className="w-full bg-black/50 rounded-full h-3 border border-red-800/20">
                 <div 
@@ -328,7 +369,7 @@ export default function ProfileModal({ isOpen, onClose, player, onSave, toast }:
                 )}
               </div>
               <div className="grid grid-cols-3 gap-2">
-                {(isEditing ? editForm.mainHeroes : player.mainHeroes).map((hero, index) => (
+                {(isEditing ? editForm.mainHeroes : current.mainHeroes).map((hero, index) => (
                   <div key={index} className="relative group">
                     <img 
                       src={`/dota2/${hero}.png`}
@@ -354,9 +395,9 @@ export default function ProfileModal({ isOpen, onClose, player, onSave, toast }:
                     onClick={() => {
                       setIsEditing(false);
                       setEditForm({
-                        name: player.name,
-                        position: player.position,
-                        mainHeroes: player.mainHeroes
+                        name: current.name,
+                        position: current.position,
+                        mainHeroes: current.mainHeroes
                       });
                     }}
                     className="px-6 py-2 bg-gray-600 text-white rounded-lg text-sm hover:bg-gray-500 transition-all duration-200 border border-gray-500/50"

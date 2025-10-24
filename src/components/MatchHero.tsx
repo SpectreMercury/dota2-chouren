@@ -1,77 +1,52 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
-import { currentWeekMatches, getRandomSlogan } from '@/config/matches';
-import { Player } from '@/config/players';
+import { type Match } from '@/config/matches';
+import MatchHeroSkeleton from '@/components/MatchHeroSkeleton';
 
 export default function MatchHero() {
-  const [slogan, setSlogan] = useState('');
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [match, setMatch] = useState(currentWeekMatches[0]);
+  const [match, setMatch] = useState<Match | null>(null);
 
   useEffect(() => {
-    setSlogan(getRandomSlogan());
-    
-    // 加载最新的玩家数据
-    const loadPlayers = async () => {
+    // 加载对阵数据（直接从数据库合并后返回）
+    const loadMatch = async () => {
       try {
-        const response = await fetch('/api/players');
-        if (response.ok) {
-          const playersData = await response.json();
-          setPlayers(playersData);
-          
-          // 更新对阵信息中的玩家数据
-          const updatedMatch = {
-            ...currentWeekMatches[0],
-            teamA: {
-              ...currentWeekMatches[0].teamA,
-              players: currentWeekMatches[0].teamA.players.map(matchPlayer => {
-                const latestPlayer = playersData.find((p: Player) => p.steamId === matchPlayer.steamId);
-                return latestPlayer ? {
-                  ...matchPlayer,
-                  name: latestPlayer.name,
-                  position: latestPlayer.position,
-                  avatar: latestPlayer.avatar
-                } : matchPlayer;
-              })
-            },
-            teamB: {
-              ...currentWeekMatches[0].teamB,
-              players: currentWeekMatches[0].teamB.players.map(matchPlayer => {
-                const latestPlayer = playersData.find((p: Player) => p.steamId === matchPlayer.steamId);
-                return latestPlayer ? {
-                  ...matchPlayer,
-                  name: latestPlayer.name,
-                  position: latestPlayer.position,
-                  avatar: latestPlayer.avatar
-                } : matchPlayer;
-              })
-            }
-          };
-          setMatch(updatedMatch);
+        const res = await fetch('/api/matches', { cache: 'no-store' });
+        if (res.ok) {
+          const matches = await res.json();
+          setMatch(matches[0]);
         }
       } catch (error) {
-        console.error('加载玩家数据失败:', error);
+        console.error('加载对阵数据失败:', error);
       }
     };
-    
-    loadPlayers();
+
+    loadMatch();
   }, []);
 
+  // 加载中：显示骨架屏，避免先渲染“已结束”占位
+  if (!match) {
+    return <MatchHeroSkeleton />;
+  }
+
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-black via-red-950 to-black flex flex-col items-center justify-center">
+    <div className="relative min-h-screen flex flex-col items-center justify-center">
       {/* 背景装饰 */}
-      <div className="absolute inset-0 bg-black/40"></div>
+      <div className="absolute inset-0"></div>
       
       <div className="relative z-10 text-center max-w-6xl mx-auto px-4">
-        {/* 主标题 */}
-        <h1 className="text-6xl md:text-8xl font-bold text-white mb-6 tracking-wider">
-          DOTA 2 仇人杯
-        </h1>
+        {/* 顶部LOGO视频（替换原文字） */}
+        <div className="mb-6 flex justify-center">
+          
+        </div>
         
-        {/* Slogan */}
-        <div className="text-2xl md:text-3xl text-red-400 font-medium mb-16 tracking-wide">
-          {slogan}
+        {/* Slogan 图拼接（放大并通过负边距消除中间留白） */}
+        <div className="mb-16">
+          <div className="flex items-center justify-center gap-0 leading-none">
+            <img src="/img/slogan1.png" alt="slogan-1" className="h-24 md:h-28 lg:h-32 object-contain select-none" draggable="false" />
+            <img src="/img/slogan2.png" alt="slogan-2" className="h-24 md:h-28 lg:h-32 object-contain select-none -ml-3 md:-ml-5 lg:-ml-8" draggable="false" />
+          </div>
         </div>
 
         {/* 对阵信息 */}
@@ -81,11 +56,11 @@ export default function MatchHero() {
           <div className="flex items-center justify-between max-w-4xl mx-auto">
             {/* 腾哥队 */}
             <div className="text-center flex-1">
-              <div className="text-3xl font-bold text-white mb-4" style={{ color: match.teamA.color }}>
-                {match.teamA.name}
+              <div className="text-3xl font-bold text-white mb-4" style={{ color: match?.teamA.color }}>
+                {match?.teamA.name}
               </div>
               <div className="space-y-2">
-                {match.teamA.players.map((player, index) => (
+                {match?.teamA.players.map((player, index) => (
                   <div key={player.steamId} className="flex items-center justify-start space-x-3">
                     <img 
                       src={player.avatar} 
@@ -102,17 +77,17 @@ export default function MatchHero() {
             {/* VS */}
             <div className="mx-8">
               <div className="text-4xl font-bold text-red-500">VS</div>
-              <div className="text-sm text-gray-400 mt-2">{match.date}</div>
-              <div className="text-sm text-gray-400">{match.time}</div>
+              <div className="text-sm text-gray-400 mt-2">{match?.date}</div>
+              <div className="text-sm text-gray-400">{match?.time}</div>
             </div>
 
             {/* 芬儿队 */}
             <div className="text-center flex-1">
-              <div className="text-3xl font-bold text-white mb-4" style={{ color: match.teamB.color }}>
-                {match.teamB.name}
+              <div className="text-3xl font-bold text-white mb-4" style={{ color: match?.teamB.color }}>
+                {match?.teamB.name}
               </div>
               <div className="space-y-2">
-                {match.teamB.players.map((player, index) => (
+                {match?.teamB.players.map((player, index) => (
                   <div key={player.steamId} className="flex items-center justify-end space-x-3">
                     <span className="text-xs text-gray-500">({Array.isArray(player.position) ? player.position.join('/') : player.position})</span>
                     <span className="text-gray-300 text-sm">{player.name}</span>
@@ -130,8 +105,8 @@ export default function MatchHero() {
           {/* 比赛状态 */}
           <div className="mt-8 text-center">
             <span className={`px-4 py-2 rounded-full text-sm font-medium ${
-              match.status === 'upcoming' ? 'bg-yellow-900/50 text-yellow-300 border border-yellow-700' :
-              match.status === 'live' ? 'bg-red-900/50 text-red-300 border border-red-700' :
+              match?.status === 'upcoming' ? 'bg-yellow-900/50 text-yellow-300 border border-yellow-700' :
+              match?.status === 'live' ? 'bg-red-900/50 text-red-300 border border-red-700' :
               'bg-gray-900/50 text-gray-300 border border-gray-700'
             }`}>
               {match.status === 'upcoming' ? '即将开始' :

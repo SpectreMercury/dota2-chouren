@@ -16,7 +16,7 @@ model Player {
   name          String
   avatar        String
   mmr           Int
-  position      String   // "Carry" | "Mid" | "Offlane" | "Support"
+  position      String[] // ["Carry", "Mid", "Offlane", "Support", "Gank"]
   mainHeroes    String[]
   matches       Int
   win           Int

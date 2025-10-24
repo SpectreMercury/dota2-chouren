@@ -63,7 +63,15 @@ function HeroSelectModal({ isOpen, onClose, onSelect, currentHeroes }: HeroSelec
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+    <div 
+      className="fixed inset-0 flex items-center justify-center z-50 p-4"
+      style={{
+        backgroundImage: "linear-gradient(rgba(0,0,0,0.90), rgba(0,0,0,0.90)), url('/img/profile')",
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backdropFilter: 'blur(2px)'
+      }}
+    >
       <div className="bg-slate-800 rounded-2xl max-w-6xl w-full max-h-[80vh] overflow-y-auto">
         <div className="p-6 border-b border-slate-700">
           <h3 className="text-2xl font-bold text-white">选择常用英雄 ({selectedHeroes.length}/3)</h3>

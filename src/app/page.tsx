@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import PlayerCard from '@/components/PlayerCard';
+import PlayerCardSkeleton from '@/components/PlayerCardSkeleton';
+import MatchHeroSkeleton from '@/components/MatchHeroSkeleton';
 import Navbar from '@/components/Navbar';
 import ProfileModal from '@/components/ProfileModal';
 import MatchHero from '@/components/MatchHero';
@@ -13,12 +15,13 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [userPlayer, setUserPlayer] = useState<Player | null>(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [matchesRefreshKey, setMatchesRefreshKey] = useState(0);
   const toast = useToast();
 
   // 加载玩家数据
   const loadPlayers = async () => {
     try {
-      const response = await fetch('/api/players');
+      const response = await fetch('/api/players', { cache: 'no-store' });
       if (response.ok) {
         const data = await response.json();
         setPlayers(data);
@@ -28,6 +31,7 @@ export default function Home() {
     } catch (error) {
       console.error('Error loading players:', error);
     } finally {
+      // 立即结束loading，避免阻塞其他组件（如对阵）
       setIsLoading(false);
     }
   };
@@ -59,6 +63,8 @@ export default function Home() {
     }
     // 重新加载数据确保同步
     loadPlayers();
+    // 触发对阵区域重新加载，确保显示最新职位/名字
+    setMatchesRefreshKey((k) => k + 1);
   };
 
   const handleUserBind = (player: Player) => {
@@ -75,11 +81,12 @@ export default function Home() {
   };
 
   const handleProfileClick = () => {
+    // 先打开编辑框，内部自行拉取最新数据并显示骨架屏
     setIsProfileModalOpen(true);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-red-950 to-black relative">
+    <div className="min-h-screen relative">
       {/* 菜单栏 */}
       <Navbar 
         onUserBind={handleUserBind} 
@@ -90,7 +97,8 @@ export default function Home() {
       />
       
       {/* 首屏英雄区域 */}
-      <MatchHero key={players.length} />
+      {/* 让对阵组件独立加载，避免等待玩家列表完成 */}
+      <MatchHero key={matchesRefreshKey} />
       
       <main>
         <div className="container mx-auto px-4 py-16">
@@ -104,8 +112,15 @@ export default function Home() {
         </header>
 
         {isLoading ? (
-          <div className="text-center py-8">
-            <div className="text-white text-xl">加载中...</div>
+          <div className="relative overflow-hidden py-4">
+            <div className="flex gap-8">
+              {/* 骨架屏卡片 */}
+              {[1, 2, 3, 4, 5, 6].map((index) => (
+                <div key={index} className="flex-shrink-0 w-80">
+                  <PlayerCardSkeleton />
+                </div>
+              ))}
+            </div>
           </div>
         ) : (
           <div className="relative overflow-hidden py-4">
