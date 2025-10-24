@@ -115,14 +115,14 @@ export class HybridStorage {
         if (!pos.every((p: any) => typeof p === 'string')) {
           throw new Error('请求参数无效: position 必须为字符串数组');
         }
-        data.position = pos;
+        data.position = { set: pos };
       }
       if (updateData?.mainHeroes !== undefined) {
         const heroes = Array.isArray(updateData.mainHeroes) ? updateData.mainHeroes : [updateData.mainHeroes];
         if (!heroes.every((h: any) => typeof h === 'string')) {
           throw new Error('请求参数无效: mainHeroes 必须为字符串数组');
         }
-        data.mainHeroes = heroes;
+        data.mainHeroes = { set: heroes };
       }
       if (Object.keys(data).length === 0) {
         throw new Error('无有效更新字段');
