@@ -67,12 +67,12 @@ export default function Navbar({ onUserBind, onUserUnbind, onEditProfile, userPl
     <>
       {/* 导航栏 */}
       <nav 
-        className="fixed top-0 w-full h-[90px] border-b border-red-800/30 z-30 bg-cover bg-center"
+        className="fixed top-0 w-full h-[90px]  z-30 bg-cover bg-center"
         style={{ backgroundImage: "url('/img/nav.png')" }}
       >
         <div className="container mx-auto px-[60px] w-full h-full flex ">
-          <div className="flex justify-between w-full items-start">
-            <video
+          <div className="flex justify-end w-full items-start">
+            {/* <video
                 className=""
                 src="/img/coverlogo180517.webm"
                 autoPlay
@@ -83,7 +83,7 @@ export default function Navbar({ onUserBind, onUserUnbind, onEditProfile, userPl
                 playsInline
                 preload="metadata"
                 aria-label="DOTA 2 仇人杯"
-              />
+              /> */}
             <div className="flex gap-4 mt-2">
               {userPlayer ? (
                 <div 
