@@ -100,8 +100,10 @@ export class HybridStorage {
       
       return players.map(this.transformDbPlayer);
     } catch (error: unknown) {
-      console.log('MongoDB读取失败:', error instanceof Error ? error.message : String(error));
-      throw new Error('数据库读取失败');
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error('MongoDB读取失败:', msg);
+      const detail = process.env.DB_DIAG === '1' ? `数据库读取失败: ${msg}` : '数据库读取失败';
+      throw new Error(detail);
     }
   }
   
@@ -161,8 +163,10 @@ export class HybridStorage {
       
       return player ? this.transformDbPlayer(player) : null;
     } catch (error: unknown) {
-      console.log('MongoDB查找失败:', error instanceof Error ? error.message : String(error));
-      throw new Error('数据库读取失败');
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error('MongoDB查找失败:', msg);
+      const detail = process.env.DB_DIAG === '1' ? `数据库读取失败: ${msg}` : '数据库读取失败';
+      throw new Error(detail);
     }
   }
   
