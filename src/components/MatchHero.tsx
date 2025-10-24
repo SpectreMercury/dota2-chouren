@@ -44,8 +44,7 @@ export default function MatchHero() {
         {/* Slogan 图拼接（放大并通过负边距消除中间留白） */}
         <div className="mb-16">
           <div className="flex items-center justify-center gap-0 leading-none">
-            <img src="/img/slogan1.png" alt="slogan-1" className="h-24 md:h-28 lg:h-32 object-contain select-none" draggable="false" />
-            <img src="/img/slogan2.png" alt="slogan-2" className="h-24 md:h-28 lg:h-32 object-contain select-none -ml-3 md:-ml-5 lg:-ml-8" draggable="false" />
+            <img src="/img/Section1.png" alt="slogan-1" className="h-32 md:h-36 lg:h-56 object-contain select-none" draggable="false" />
           </div>
         </div>
 

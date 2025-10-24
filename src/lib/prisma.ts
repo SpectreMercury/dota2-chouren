@@ -100,20 +100,8 @@ export class HybridStorage {
       
       return players.map(this.transformDbPlayer);
     } catch (error: unknown) {
-      console.log('MongoDB失败，使用文件或内置数据:', error instanceof Error ? error.message : String(error));
-
-      // 优先尝试读取已打包的只读文件；失败则返回内置配置
-      try {
-        const filePath = getPlayersFilePath();
-        if (fs.existsSync(filePath)) {
-          const fileContent = fs.readFileSync(filePath, 'utf-8');
-          return JSON.parse(fileContent) as Player[];
-        }
-      } catch (_) {
-        // 忽略文件读取失败，继续返回内置配置
-      }
-
-      return playersConfig as Player[];
+      console.log('MongoDB读取失败:', error instanceof Error ? error.message : String(error));
+      throw new Error('数据库读取失败');
     }
   }
   
@@ -154,14 +142,8 @@ export class HybridStorage {
       
       return player ? this.transformDbPlayer(player) : null;
     } catch (error: unknown) {
-      console.log('MongoDB查找失败，使用文件存储:', error instanceof Error ? error.message : String(error));
-      
-      // 回退到文件存储
-      const filePath = getPlayersFilePath();
-      const fileContent = fs.readFileSync(filePath, 'utf-8');
-      const players = JSON.parse(fileContent);
-      
-      return players.find((p: any) => p.steamId === steamId) || null;
+      console.log('MongoDB查找失败:', error instanceof Error ? error.message : String(error));
+      throw new Error('数据库读取失败');
     }
   }
   
