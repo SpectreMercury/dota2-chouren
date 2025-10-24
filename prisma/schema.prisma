@@ -1,0 +1,33 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("MONGODB_URI")
+}
+
+model Player {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  playerId      Int      @unique // 原来的数字ID
+  name          String
+  avatar        String
+  mmr           Int
+  position      String   // "Carry" | "Mid" | "Offlane" | "Support"
+  mainHeroes    String[]
+  matches       Int
+  win           Int
+  lose          Int
+  steamId       String   @unique
+  avgKDA        Float?
+  avgGPM        Float?
+  avgXPM        Float?
+  totalMatches  Int?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("players")
+}
