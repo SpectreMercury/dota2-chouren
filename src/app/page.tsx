@@ -127,7 +127,7 @@ export default function Home() {
         )}
 
         <footer className="text-center mt-16 text-gray-400">
-          <p>&copy; 2024 Dota 2 仇人杯. Ready for battle!</p>
+          <p>&copy; 2025 Dota 2 仇人杯. Ready for battle!</p>
         </footer>
         </div>
       </main>

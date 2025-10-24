@@ -32,7 +32,7 @@ export const currentWeekMatches: Match[] = [
   {
     id: 1,
     title: "仇人杯 - 第三轮",
-    date: "2024-10-28",
+    date: "2025-10-28",
     time: "20:00",
     status: "upcoming",
     teamA: {
