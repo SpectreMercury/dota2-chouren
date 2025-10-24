@@ -119,7 +119,7 @@ export class HybridStorage {
   
   static async updatePlayer(steamId: string, updateData: any) {
     try {
-      // 尝试更新MongoDB
+      // 仅使用 MongoDB，禁止写文件回退
       const player = await withTimeout(
         prisma.player.update({
           where: { steamId },
@@ -131,30 +131,14 @@ export class HybridStorage {
         }),
         DB_TIMEOUT_MS
       );
-      
+
       return this.transformDbPlayer(player);
-    } catch (error: unknown) {
-      console.log('MongoDB更新失败，使用文件存储:', error instanceof Error ? error.message : String(error));
-      
-      // 回退到文件存储
-      const filePath = getPlayersFilePath();
-      const fileContent = fs.readFileSync(filePath, 'utf-8');
-      const players = JSON.parse(fileContent);
-      
-      const playerIndex = players.findIndex((p: any) => p.steamId === steamId);
-      if (playerIndex === -1) {
-        throw new Error('未找到该玩家');
-      }
-      
-      players[playerIndex] = {
-        ...players[playerIndex],
-        name: updateData.name,
-        position: updateData.position,
-        mainHeroes: updateData.mainHeroes
-      };
-      
-      fs.writeFileSync(filePath, JSON.stringify(players, null, 2), 'utf-8');
-      return players[playerIndex];
+    } catch (error: any) {
+      // 直接抛出数据库更新错误，供上层返回
+      const msg = error?.code === 'P2025'
+        ? '未找到该玩家，无法更新'
+        : '数据库更新失败';
+      throw new Error(msg);
     }
   }
   
