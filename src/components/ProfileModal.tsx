@@ -358,7 +358,7 @@ export default function ProfileModal({ isOpen, onClose, player, onSave, toast }:
             {/* 擅长英雄 */}
             <div className="mb-6">
               <div className="flex justify-between items-center mb-4">
-                <span className="text-gray-300 text-sm font-medium">擅长英雄 ({(isEditing ? editForm.mainHeroes : player.mainHeroes).length}/3)</span>
+                <span className="text-gray-300 text-sm font-medium">擅长英雄 ({(isEditing ? editForm.mainHeroes : current.mainHeroes).length}/3)</span>
                 {isEditing && (
                   <button
                     onClick={() => setIsHeroModalOpen(true)}

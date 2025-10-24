@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import type { Player } from '@/config/players';
 import fs from 'fs';
 import path from 'path';
 import { playersConfig } from '@/config/players';
@@ -28,7 +29,7 @@ export async function withTimeout<T>(promise: Promise<T>, timeoutMs = 5000): Pro
 
 // 混合存储：优先使用MongoDB，失败时使用文件
 export class HybridStorage {
-  static async getPlayers() {
+  static async getPlayers(): Promise<Player[]> {
     try {
       // 尝试从MongoDB获取数据
       const players = await withTimeout(
@@ -39,8 +40,8 @@ export class HybridStorage {
       );
       
       return players.map(this.transformDbPlayer);
-    } catch (error) {
-      console.log('MongoDB失败，使用文件存储:', error.message);
+    } catch (error: unknown) {
+      console.log('MongoDB失败，使用文件存储:', error instanceof Error ? error.message : String(error));
       
       // 回退到文件存储
       const filePath = getPlayersFilePath();
@@ -55,7 +56,7 @@ export class HybridStorage {
       }
       
       const fileContent = fs.readFileSync(filePath, 'utf-8');
-      return JSON.parse(fileContent);
+      return JSON.parse(fileContent) as Player[];
     }
   }
   
@@ -75,8 +76,8 @@ export class HybridStorage {
       );
       
       return this.transformDbPlayer(player);
-    } catch (error) {
-      console.log('MongoDB更新失败，使用文件存储:', error.message);
+    } catch (error: unknown) {
+      console.log('MongoDB更新失败，使用文件存储:', error instanceof Error ? error.message : String(error));
       
       // 回退到文件存储
       const filePath = getPlayersFilePath();
@@ -111,8 +112,8 @@ export class HybridStorage {
       );
       
       return player ? this.transformDbPlayer(player) : null;
-    } catch (error) {
-      console.log('MongoDB查找失败，使用文件存储:', error.message);
+    } catch (error: unknown) {
+      console.log('MongoDB查找失败，使用文件存储:', error instanceof Error ? error.message : String(error));
       
       // 回退到文件存储
       const filePath = getPlayersFilePath();
@@ -123,7 +124,7 @@ export class HybridStorage {
     }
   }
   
-  static transformDbPlayer(dbPlayer: any) {
+  static transformDbPlayer(dbPlayer: any): Player {
     return {
       id: dbPlayer.playerId,
       name: dbPlayer.name,

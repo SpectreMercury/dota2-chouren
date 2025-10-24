@@ -25,10 +25,13 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(player);
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('搜索玩家失败:', error);
     return NextResponse.json(
-      { error: '搜索玩家失败', details: error.message },
+      { 
+        error: '搜索玩家失败', 
+        details: error instanceof Error ? error.message : String(error)
+      },
       { status: 500 }
     );
   }

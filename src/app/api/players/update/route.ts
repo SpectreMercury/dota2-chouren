@@ -21,10 +21,13 @@ export async function PUT(request: NextRequest) {
       player
     });
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('更新玩家信息失败:', error);
     return NextResponse.json(
-      { error: '更新玩家信息失败', details: error.message },
+      { 
+        error: '更新玩家信息失败', 
+        details: error instanceof Error ? error.message : String(error)
+      },
       { status: 500 }
     );
   }

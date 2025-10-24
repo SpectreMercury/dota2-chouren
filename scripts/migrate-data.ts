@@ -9,7 +9,7 @@ interface JSONPlayer {
   name: string;
   avatar: string;
   mmr: number;
-  position: string;
+  position: string[];
   mainHeroes: string[];
   matches: number;
   win: number;
