@@ -8,12 +8,6 @@ const getPlayersFilePath = () => {
   return path.join(process.cwd(), 'data', 'players.json');
 };
 
-// 获取备份文件路径
-const getBackupFilePath = () => {
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  return path.join(process.cwd(), 'data', `players-backup-${timestamp}.json`);
-};
-
 export async function PUT(request: NextRequest) {
   try {
     const updatedPlayer: Player = await request.json();
@@ -46,10 +40,6 @@ export async function PUT(request: NextRequest) {
         { status: 404 }
       );
     }
-
-    // 创建备份
-    const backupPath = getBackupFilePath();
-    fs.writeFileSync(backupPath, fileContent, 'utf-8');
 
     // 更新玩家数据（保留其他字段）
     players[playerIndex] = {

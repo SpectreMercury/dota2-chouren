@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-import { Player } from '@/config/players';
+import { Player, playersConfig } from '@/config/players';
 
 // 获取玩家数据文件路径
 const getPlayersFilePath = () => {
@@ -12,12 +12,16 @@ export async function GET() {
   try {
     const filePath = getPlayersFilePath();
     
-    // 检查文件是否存在
+    // 如果文件不存在，从配置创建初始数据
     if (!fs.existsSync(filePath)) {
-      return NextResponse.json(
-        { error: '玩家数据文件不存在' },
-        { status: 404 }
-      );
+      // 确保目录存在
+      const dataDir = path.dirname(filePath);
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+      
+      // 创建初始数据文件
+      fs.writeFileSync(filePath, JSON.stringify(playersConfig, null, 2), 'utf-8');
     }
 
     const fileContent = fs.readFileSync(filePath, 'utf-8');
