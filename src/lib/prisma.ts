@@ -5,10 +5,14 @@ import path from 'path';
 import { playersConfig } from '@/config/players';
 import dns from 'dns';
 
-// 兼容自定义环境变量名：优先使用 MONGODB_URI，不存在则使用 dota2_MONGODB_URI/DOTA2_MONGODB_URI
-const altMongo = (process.env as any).dota2_MONGODB_URI || process.env.DOTA2_MONGODB_URI;
+// 兼容自定义环境变量名：在两者之间互相补齐，避免 Prisma 客户端期望的变量名不一致
+const altMongo = (process.env as any).dota2_MONGODB_URI || process.env.dota2_MONGODB_URI;
 if (!process.env.MONGODB_URI && altMongo) {
   process.env.MONGODB_URI = altMongo as string;
+}
+if (!process.env.dota2_MONGODB_URI && process.env.MONGODB_URI) {
+  process.env.dota2_MONGODB_URI = process.env.MONGODB_URI;
+  (process.env as any).dota2_MONGODB_URI = process.env.MONGODB_URI;
 }
 
 // 如果 URI 缺少数据库名且提供了 MONGODB_DB/MONGODB_DATABASE/DB_NAME，则自动补全路径
@@ -44,7 +48,7 @@ function logDbDiagnosticsOnce() {
   if (diagLogged || process.env.DB_DIAG !== '1') return;
   diagLogged = true;
   try {
-    const used = process.env.MONGODB_URI ? 'MONGODB_URI' : (altMongo ? (process.env.DOTA2_MONGODB_URI ? 'DOTA2_MONGODB_URI' : 'dota2_MONGODB_URI') : 'NONE');
+    const used = process.env.MONGODB_URI ? 'MONGODB_URI' : (altMongo ? (process.env.dota2_MONGODB_URI ? 'dota2_MONGODB_URI' : 'dota2_MONGODB_URI') : 'NONE');
     const uri = process.env.MONGODB_URI || altMongo || '';
     if (!uri) {
       console.warn('[DB_DIAG] 未检测到连接串环境变量');

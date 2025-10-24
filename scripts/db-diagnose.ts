@@ -49,8 +49,8 @@ function maskUri(uri: string) {
 }
 
 async function main() {
-  const used = process.env.MONGODB_URI ? 'MONGODB_URI' : (process.env.DOTA2_MONGODB_URI ? 'DOTA2_MONGODB_URI' : (process.env as any).dota2_MONGODB_URI ? 'dota2_MONGODB_URI' : 'NONE');
-  const uri = process.env.MONGODB_URI || (process.env.DOTA2_MONGODB_URI || (process.env as any).dota2_MONGODB_URI) || '';
+  const used = process.env.MONGODB_URI ? 'MONGODB_URI' : (process.env.dota2_MONGODB_URI ? 'dota2_MONGODB_URI' : (process.env as any).dota2_MONGODB_URI ? 'dota2_MONGODB_URI' : 'NONE');
+  const uri = process.env.MONGODB_URI || (process.env.dota2_MONGODB_URI || (process.env as any).dota2_MONGODB_URI) || '';
   console.log('[DB_DIAG] 使用的变量:', used);
   console.log('[DB_DIAG] URI(脱敏):', uri ? maskUri(uri) : '(未设置)');
   console.log('[DB_DIAG] DNS servers:', dns.getServers());

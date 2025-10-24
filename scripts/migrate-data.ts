@@ -30,7 +30,7 @@ function loadFile(fp: string) {
 loadFile(path.join(process.cwd(), '.env'));
 loadFile(path.join(process.cwd(), '.env.local'));
 // 兼容自定义环境变量名：优先使用 MONGODB_URI，不存在则使用 dota2_MONGODB_URI/DOTA2_MONGODB_URI
-const altMongo = (process.env as any).dota2_MONGODB_URI || process.env.DOTA2_MONGODB_URI;
+const altMongo = (process.env as any).dota2_MONGODB_URI || process.env.dota2_MONGODB_URI;
 if (!process.env.MONGODB_URI && altMongo) {
   process.env.MONGODB_URI = altMongo as string;
 }
