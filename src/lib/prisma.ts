@@ -15,16 +15,22 @@ if (!process.env.dota2_MONGODB_URI && process.env.MONGODB_URI) {
   (process.env as any).dota2_MONGODB_URI = process.env.MONGODB_URI;
 }
 
-// 如果 URI 缺少数据库名且提供了 MONGODB_DB/MONGODB_DATABASE/DB_NAME，则自动补全路径
+// 如果 URI 缺少数据库名且提供了 MONGODB_DB/MONGODB_DATABASE/DB_NAME，则自动补全路径（双向：MONGODB_URI 和 DOTA2_MONGODB_URI）
 try {
   const dbNameFromEnv = process.env.MONGODB_DB || process.env.MONGODB_DATABASE || process.env.DB_NAME;
-  if (process.env.MONGODB_URI && dbNameFromEnv) {
-    const u = new URL(process.env.MONGODB_URI);
-    if (!u.pathname || u.pathname === '/') {
-      u.pathname = `/${dbNameFromEnv}`;
-      process.env.MONGODB_URI = u.toString();
-    }
-  }
+  const maybeAppend = (key: string) => {
+    const uri = process.env[key];
+    if (!uri || !dbNameFromEnv) return;
+    try {
+      const u = new URL(uri);
+      if (!u.pathname || u.pathname === '/') {
+        u.pathname = `/${dbNameFromEnv}`;
+        process.env[key] = u.toString();
+      }
+    } catch {}
+  };
+  maybeAppend('MONGODB_URI');
+  maybeAppend('DOTA2_MONGODB_URI');
 } catch (_) {
   // 忽略解析失败
 }
